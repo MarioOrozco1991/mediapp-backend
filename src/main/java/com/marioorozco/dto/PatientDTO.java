@@ -16,11 +16,11 @@ public class PatientDTO {
     @NotNull  //Para validar que viaje la propiedad idPaciente en el body
     @NotEmpty //Para validar que el valor de la propiedad no sea vacia ""
     @NotBlank //Para validar que e valor de la propiedad no sea un espacio en blanco " "
-    @Size(min = 3, max = 70, message = "firstname.size")
+    @Size(min = 3, max = 70, message = "{firstname.size}")
     private String firstName;
 
     @NotNull
-    @Size(min = 3, max = 70, message = "lastname.size")
+    @Size(min = 3, max = 70, message = "{lastname.size}")
     private String lastName;
 
     @NotNull

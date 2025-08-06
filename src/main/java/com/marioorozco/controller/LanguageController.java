@@ -26,6 +26,7 @@ public class LanguageController {
         Locale userLocale = switch (loc){
             case "en", "us" -> Locale.ENGLISH;
             case "fr" -> Locale.FRENCH;
+            case "es", "es_ES" -> Locale.ROOT;
             default -> Locale.ROOT;
         };
 
