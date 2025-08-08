@@ -3,15 +3,16 @@ package com.marioorozco.controller;
 import com.marioorozco.dto.PatientDTO;
 import com.marioorozco.model.Patient;
 import com.marioorozco.service.IPatientService;
+import com.marioorozco.util.MapperUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-//import org.springframework.hateoas.EntityModel;
-//import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.hateoas.EntityModel;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
+
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-//import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import java.net.URI;
 import java.util.List;
@@ -21,40 +22,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PatientController {
 
+    //@Autowired
     private final IPatientService service;
-    private final ModelMapper modelMapper;
 
+    private final MapperUtil mapperUtil;
 
     @GetMapping
     public ResponseEntity<List<PatientDTO>> findAll() throws Exception{
 
-        List<PatientDTO> list = service.findAll().stream()
-                .map(this::convertToDto).toList();
+        List<PatientDTO> list = mapperUtil.mapList(service.findAll(), PatientDTO.class);
 
         return ResponseEntity.ok().body(list);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<PatientDTO> findById(@PathVariable("id") Integer id) throws Exception{
-        PatientDTO obj = convertToDto(service.findById(id));
+        PatientDTO obj = mapperUtil.map(service.findById(id), PatientDTO.class);
 
         return ResponseEntity.ok().body(obj);
     }
 
     @PostMapping
-    public ResponseEntity<Void> save(@Valid @RequestBody PatientDTO dto) throws Exception{ // @Valid valida el dto, para que venga con los datos correctos definidos en la clase dto.
-        Patient obj = service.save(convertToEntity(dto));
+    public ResponseEntity<Void> save(@Valid @RequestBody PatientDTO dto) throws Exception{
+        Patient obj = service.save(mapperUtil.map(dto, Patient.class));
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(obj.getIdPatient()).toUri();
-        //localhost:8080/patients/6
         return ResponseEntity.created(location).build();
-
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<PatientDTO> update(@Valid @RequestBody PatientDTO dto, @PathVariable("id") Integer id) throws Exception{
-        Patient obj = service.update(convertToEntity(dto), id);
+        Patient obj = service.update(mapperUtil.map(dto, Patient.class), id);
 
-        return ResponseEntity.ok().body(convertToDto(obj));
+        return ResponseEntity.ok().body(mapperUtil.map(obj, PatientDTO.class));
     }
 
     @DeleteMapping("/{id}")
@@ -64,28 +63,19 @@ public class PatientController {
         return ResponseEntity.noContent().build();
     }
 
-//    @GetMapping("/hateoas/{id}")
-//    public EntityModel<PatientDTO> findByIdHateoas(@PathVariable("id") Integer id) throws Exception {
-//        Patient obj = service.findById(id);
-//        EntityModel<PatientDTO> resource = EntityModel.of(convertToDto(obj));
-//
-//        //generar link informativo
-//        //localhost:8080/patients/1
-//        WebMvcLinkBuilder link1 = linkTo(methodOn(PatientController.class).findById(obj.getIdPatient()));
-//        WebMvcLinkBuilder link2 = linkTo(methodOn(PatientController.class).findAll());
-//
-//        resource.add(link1.withRel("patient-self-info"));
-//        resource.add(link2.withRel("all-patients"));
-//
-//        return resource;
-//
-//    }
+    @GetMapping("/hateoas/{id}")
+    public EntityModel<PatientDTO> findByIdHateoas(@PathVariable("id") Integer id) throws Exception {
+        Patient obj = service.findById(id);
+        EntityModel<PatientDTO> resource = EntityModel.of(mapperUtil.map(obj, PatientDTO.class));
 
-    private Patient convertToEntity(PatientDTO dto) {
-        return modelMapper.map(dto, Patient.class);
+        WebMvcLinkBuilder link1 = linkTo(methodOn(PatientController.class).findById(obj.getIdPatient()));
+        WebMvcLinkBuilder link2 = linkTo(methodOn(PatientController.class).findAll());
+
+        resource.add(link1.withRel("patient-self-info"));
+        resource.add(link2.withRel("all-patients"));
+
+        return resource;
+
     }
 
-    private PatientDTO convertToDto(Patient entity) {
-        return modelMapper.map(entity, PatientDTO.class);
-    }
 }
